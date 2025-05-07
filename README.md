@@ -2,6 +2,16 @@
 
 此機器人提供了一個 `/bossreport` 命令，用於通報遊戲中黑王的出現位置。
 
+## 安裝
+
+[文檔參考](https://github.com/discord/cloudflare-sample-app)
+
+```
+npm install
+npm install wrangler
+npx wrangler --version
+```
+
 ### 設置步驟
 
 1. 在Discord伺服器中創建一個webhook：

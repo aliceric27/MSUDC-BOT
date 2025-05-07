@@ -8,9 +8,19 @@ import {
   InteractionType,
   verifyKey,
 } from 'discord-interactions';
-import { BOSS_COMMAND, GMS_SEARCH_COMMAND } from './commands.js';
+import { 
+  BOSS_COMMAND, 
+  GMS_SEARCH_COMMAND, 
+  DELETE_MESSAGE_COMMAND,
+  LIST_MESSAGES_COMMAND,
+  DELETE_ALL_MESSAGES_COMMAND
+} from './commands.js';
 // import { getCuteUrl } from './reddit.js';
 import { InteractionResponseFlags } from 'discord-interactions';
+
+// 使用KV存儲或內存存儲來記錄訊息與用戶的對應關係
+const messageRegistry = new Map(); // messageId -> messageInfo
+const userMessages = new Map();   // userId -> Set of messageIds
 
 class JsonResponse extends Response {
   constructor(body, init) {
@@ -43,7 +53,6 @@ router.post('/', async (request, env) => {
     request,
     env,
   );
-  console.log(isValid, interaction);
   if (!isValid || !interaction) {
     return new Response('Bad request signature.', { status: 401 });
   }
@@ -100,11 +109,9 @@ router.post('/', async (request, env) => {
         const channel = channelOption.value;
         
         // 獲取當前時間並格式化
-        const now = new Date();
-        const formattedTime = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        
+        const now = new Date();        
         // 創建格式化的訊息
-        const message = `<t:1746599460:t>出現黑王 !!  [**${map}**](<https://maplestorywiki.net/index.php?search=${map}+map&title=Special%3ASearch&profile=default&fulltext=1>) - **${channel}** ch. `;
+        const message = `\`出現黑王 !!\`  [**${map}**](<https://maplestorywiki.net/index.php?search=${map}+map&title=Special%3ASearch&profile=default&fulltext=1>) - **${channel}** ch. `;
         
         try {
           // 使用webhook發送訊息
@@ -117,9 +124,31 @@ router.post('/', async (request, env) => {
               content: message,
             }),
           });
+          const responseJson = await response.json();
+          console.log(JSON.stringify(responseJson, null, 2));
+          const messageId = responseJson.id;
           
+          // 記錄使用者ID與訊息ID的對應關係
+          const userId = interaction.member.user.id;
+          console.log('responseJson',responseJson)
+          messageRegistry.set(messageId, {
+            userId,
+            webhookId: responseJson.webhook_id,
+            channelId: responseJson.channel_id,
+            timestamp: new Date().toISOString(),
+            content: responseJson.content
+          });
+          
+          // 更新使用者發送的訊息集合
+          if (!userMessages.has(userId)) {
+            userMessages.set(userId, new Set());
+          }
+          userMessages.get(userId).add(messageId);
+          
+          console.log(`已記錄訊息: ${messageId}, 用戶: ${userId}`);
+        
           if (!response.ok) {
-            console.error('發送訊息到webhook失敗:', await response.text());
+            console.error('發送訊息到webhook失敗:', await response.clone().text());
             return new JsonResponse({
               type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
               data: {
@@ -133,7 +162,7 @@ router.post('/', async (request, env) => {
           return new JsonResponse({
             type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
             data: {
-              content: `已通報黑王出現於 ${map} - ${channel}ch`,
+              content: `已通報黑王出現於 ${map} - ${channel}ch\n訊息ID: \`${messageId}\``,
               flags: InteractionResponseFlags.EPHEMERAL,
             },
           });
@@ -180,6 +209,213 @@ router.post('/', async (request, env) => {
             flags: InteractionResponseFlags.EPHEMERAL
           },
         });
+      }
+      case DELETE_MESSAGE_COMMAND.name.toLowerCase(): {
+        // 獲取用戶提供的訊息ID參數
+        const options = interaction.data.options || [];
+        const messageIdOption = options.find(opt => opt.name === 'messageid');
+        
+        // 確保提供了必要參數
+        if (!messageIdOption) {
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: '請提供要刪除的訊息ID',
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        }
+        
+        const messageId = messageIdOption.value;
+        const userId = interaction.member.user.id;
+        
+        // 檢查訊息是否存在且是由該用戶發送
+        const messageInfo = messageRegistry.get(messageId);
+        
+        if (!messageInfo) {
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: '找不到此訊息ID的紀錄',
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        }
+        
+        // 可選：檢查是否為原始發送者或管理員
+        if (messageInfo.userId !== userId) {
+          // 檢查是否為使用者，如果不是則拒絕
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: '您無權刪除此訊息',
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        }
+        
+        try {
+          // 使用Discord Webhook API刪除訊息
+          // 格式: DELETE /webhooks/{webhook.id}/{webhook.token}/messages/{message.id}
+          const response = await fetch(`${env.BOSS_WEBHOOK_URL}/messages/${messageId}`, {
+            method: 'DELETE',
+          });
+          
+          if (!response.ok) {
+            console.error('刪除訊息失敗:', await response.text());
+            return new JsonResponse({
+              type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+              data: {
+                content: '刪除訊息失敗，請聯繫管理員',
+                flags: InteractionResponseFlags.EPHEMERAL,
+              },
+            });
+          }
+          
+          // 從記錄中刪除訊息
+          messageRegistry.delete(messageId);
+          
+          // 從用戶訊息集合中移除
+          if (messageInfo && userMessages.has(messageInfo.userId)) {
+            userMessages.get(messageInfo.userId).delete(messageId);
+            // 如果集合為空，刪除整個集合
+            if (userMessages.get(messageInfo.userId).size === 0) {
+              userMessages.delete(messageInfo.userId);
+            }
+          }
+          
+          // 回應用戶的命令
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: `已成功刪除訊息(ID: ${messageId})`,
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        } catch (error) {
+          console.error('處理刪除訊息時出錯:', error);
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: '處理刪除訊息時出錯',
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        }
+      }
+      case LIST_MESSAGES_COMMAND.name.toLowerCase(): {
+        const userId = interaction.member.user.id;
+        
+        // 檢查用戶是否有發送過訊息
+        if (!userMessages.has(userId) || userMessages.get(userId).size === 0) {
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: '您目前沒有任何記錄的訊息',
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        }
+        
+        // 獲取用戶的所有訊息ID
+        const messageIds = Array.from(userMessages.get(userId));
+        const messageDetails = messageIds.map(messageId => {
+          const info = messageRegistry.get(messageId);
+          if (!info) return `- \`${messageId}\` (無詳細資訊)`;
+          
+          // 格式化時間為當地時間字符串
+          const timestamp = new Date(info.timestamp);
+          const formattedTime = timestamp.toLocaleString('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          });
+          
+          return `- \`${messageId}\` (發送時間: ${formattedTime}) ${info.content}`;
+        });
+        
+        return new JsonResponse({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: `### 您的訊息列表 (共 ${messageIds.length} 條)\n${messageDetails.join('\n')}\n\n使用 \`/deletemessage messageid:訊息ID\` 可刪除單條訊息\n使用 \`/deleteallmessages\` 可刪除所有訊息`,
+            flags: InteractionResponseFlags.EPHEMERAL,
+          },
+        });
+      }
+      case DELETE_ALL_MESSAGES_COMMAND.name.toLowerCase(): {
+        const userId = interaction.member.user.id;
+        
+        // 檢查用戶是否有發送過訊息
+        if (!userMessages.has(userId) || userMessages.get(userId).size === 0) {
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: '您目前沒有任何記錄的訊息可供刪除',
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        }
+        
+        // 獲取用戶的所有訊息ID
+        const messageIds = Array.from(userMessages.get(userId));
+        const totalMessages = messageIds.length;
+        let successCount = 0;
+        let failedCount = 0;
+        
+        try {
+          // 使用Promise.all批量發送刪除請求
+          const deleteResults = await Promise.all(
+            messageIds.map(async (messageId) => {
+              try {
+                const response = await fetch(`${env.BOSS_WEBHOOK_URL}/messages/${messageId}`, {
+                  method: 'DELETE',
+                });
+                
+                if (response.ok) {
+                  successCount++;
+                  return { success: true, messageId };
+                } else {
+                  failedCount++;
+                  console.error(`刪除訊息失敗 (ID: ${messageId}):`, await response.text());
+                  return { success: false, messageId, error: response.statusText };
+                }
+              } catch (error) {
+                failedCount++;
+                console.error(`刪除訊息異常 (ID: ${messageId}):`, error);
+                return { success: false, messageId, error: error.message };
+              }
+            })
+          );
+          
+          // 清空用戶的訊息記錄
+          userMessages.delete(userId);
+          
+          // 清除messageRegistry中的相關記錄
+          messageIds.forEach(messageId => {
+            messageRegistry.delete(messageId);
+          });
+          
+          // 回應用戶
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: `已處理刪除請求：${successCount}/${totalMessages} 條訊息刪除成功${failedCount > 0 ? `，${failedCount} 條失敗` : ''}`,
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        } catch (error) {
+          console.error('批量刪除訊息時出錯:', error);
+          return new JsonResponse({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: '處理批量刪除請求時出錯',
+              flags: InteractionResponseFlags.EPHEMERAL,
+            },
+          });
+        }
       }
       default:
         return new JsonResponse({ error: 'Unknown Type' }, { status: 400 });
