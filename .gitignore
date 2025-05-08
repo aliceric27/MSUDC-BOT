@@ -3,3 +3,4 @@ coverage
 .dev.vars
 .wrangler
 .prod.vars
+.mygo.vars

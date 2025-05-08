@@ -18,6 +18,12 @@ export const BOSS_COMMAND = {
   description: '通報你發現的BOSS',
   options: [
     {
+      type: 4, // STRING type
+      name: 'server',
+      description: '請輸入伺服器編號 ex:1,2,3',
+      required: true,
+    },
+    {
       type: 3, // STRING type
       name: 'map',
       description: '請輸入地圖名稱',
