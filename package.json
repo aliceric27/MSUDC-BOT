@@ -6,7 +6,7 @@
   "private": true,
   "main": "src/server.js",
   "scripts": {
-    "start": "wrangler dev",
+    "dev": "wrangler dev",
     "ngrok": "ngrok http 8787",
     "test": "c8 mocha test",
     "fix": "eslint --fix '**/*.js'",

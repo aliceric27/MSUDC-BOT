@@ -14,13 +14,15 @@ export const getBossWebhookUrl = (server, env) => {
   }
 }
 
-export async function handleBossCommand(interaction, env, messageRegistry, userMessages) {
+export async function handleBossCommand(interaction, env) {
 
   // 獲取用戶提供的地圖和頻道參數
   const options = interaction.data.options || [];
   const mapOption = options.find(opt => opt.name === 'map');
   const channelOption = options.find(opt => opt.name === 'channel');
   const serverOption = options.find(opt => opt.name === 'server');
+
+  console.log('env',env);
   
   // 確保提供了必要參數
   if (!mapOption || !channelOption || !serverOption) {
@@ -38,7 +40,7 @@ export async function handleBossCommand(interaction, env, messageRegistry, userM
   const server = serverOption.value;
 
   // 創建格式化的訊息
-  const message = `\`出現黑王 !!\`  [**${map}**](<https://maplestorywiki.net/index.php?search=${map}+map&title=Special%3ASearch&profile=default&fulltext=1>) - **${channel}** ch. `;
+  const message = ` [**${map}**](<https://maplestorywiki.net/index.php?search=${map}+map&title=Special%3ASearch&profile=default&fulltext=1>) - **${channel}** ch. 發現黑王`;
   const hookUrl = getBossWebhookUrl(server, env);
   try {
     // 使用webhook發送訊息
@@ -53,27 +55,7 @@ export async function handleBossCommand(interaction, env, messageRegistry, userM
     });
     const responseJson = await response.json();
     console.log(JSON.stringify(responseJson, null, 2));
-    const messageId = responseJson.id;
-    
-    // 記錄使用者ID與訊息ID的對應關係
-    const userId = interaction.member.user.id;
-    console.log('responseJson',responseJson);
-    
-    messageRegistry.set(messageId, {
-      userId,
-      webhookId: responseJson.webhook_id,
-      channelId: responseJson.channel_id,
-      timestamp: new Date().toISOString(),
-      content: responseJson.content
-    });
-    
-    // 更新使用者發送的訊息集合
-    if (!userMessages.has(userId)) {
-      userMessages.set(userId, new Set());
-    }
-    userMessages.get(userId).add(messageId);
-    
-    console.log(`已記錄訊息: ${messageId}, 用戶: ${userId}`);
+    const messageURL = `https://discordapp.com/channels/${env.GUILD_ID}/${responseJson['channel_id']}/${responseJson['id']}`;
   
     if (!response.ok) {
       console.error('發送訊息到webhook失敗:', await response.clone().text());
@@ -90,7 +72,7 @@ export async function handleBossCommand(interaction, env, messageRegistry, userM
     return new JsonResponse({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: `已通報黑王出現於 ${map} - ${channel}ch\n訊息ID: \`${messageId}\``,
+        content: `[已通報黑王出現](${messageURL})`,
         flags: InteractionResponseFlags.EPHEMERAL,
       },
     });
@@ -99,7 +81,7 @@ export async function handleBossCommand(interaction, env, messageRegistry, userM
       return new JsonResponse({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          content: '😥伺服器編號錯誤!',
+          content: '🚫 **錯誤** : 伺服器編號錯誤',
           flags: InteractionResponseFlags.EPHEMERAL,
         },
       });
@@ -108,7 +90,7 @@ export async function handleBossCommand(interaction, env, messageRegistry, userM
     return new JsonResponse({
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: '😥處理黑王通報時出錯',
+        content: '🚫 **錯誤** : 處理黑王通報時出錯',
         flags: InteractionResponseFlags.EPHEMERAL,
       },
     });

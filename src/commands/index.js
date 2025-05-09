@@ -12,6 +12,3 @@ export class JsonResponse extends Response {
 
 export { handleBossCommand } from './bossCommand.js';
 export { handleGmsSearchCommand } from './gmsSearchCommand.js';
-export { handleDeleteMessageCommand } from './deleteMessageCommand.js';
-export { handleListMessagesCommand } from './listMessagesCommand.js';
-export { handleDeleteAllMessagesCommand } from './deleteAllMessagesCommand.js'; 

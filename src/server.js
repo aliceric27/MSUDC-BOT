@@ -11,9 +11,6 @@ import {
 import { 
   BOSS_COMMAND, 
   GMS_SEARCH_COMMAND, 
-  DELETE_MESSAGE_COMMAND,
-  LIST_MESSAGES_COMMAND,
-  DELETE_ALL_MESSAGES_COMMAND
 } from './commands.js';
 // import { getCuteUrl } from './reddit.js';
 import { InteractionResponseFlags } from 'discord-interactions';
@@ -21,9 +18,6 @@ import {
   JsonResponse,
   handleBossCommand,
   handleGmsSearchCommand,
-  handleDeleteMessageCommand,
-  handleListMessagesCommand,
-  handleDeleteAllMessagesCommand
 } from './commands/index.js';
 
 // 使用KV存儲或內存存儲來記錄訊息與用戶的對應關係
@@ -69,15 +63,6 @@ router.post('/', async (request, env) => {
       }
       case GMS_SEARCH_COMMAND.name.toLowerCase(): {
         return handleGmsSearchCommand(interaction, env, messageRegistry, userMessages);
-      }
-      case DELETE_MESSAGE_COMMAND.name.toLowerCase(): {
-        return handleDeleteMessageCommand(interaction, env, messageRegistry, userMessages);
-      }
-      case LIST_MESSAGES_COMMAND.name.toLowerCase(): {
-        return handleListMessagesCommand(interaction, env, messageRegistry, userMessages);
-      }
-      case DELETE_ALL_MESSAGES_COMMAND.name.toLowerCase(): {
-        return handleDeleteAllMessagesCommand(interaction, env, messageRegistry, userMessages);
       }
       default:
         return new JsonResponse({ error: 'Unknown Type' }, { status: 400 });
