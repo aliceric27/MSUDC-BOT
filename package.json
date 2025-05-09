@@ -12,7 +12,9 @@
     "fix": "eslint --fix '**/*.js'",
     "lint": "eslint '**/*.js'",
     "reg": "node src/register.js",
-    "publish": "wrangler deploy"
+    "publish": "wrangler deploy",
+    "pmygo": "node src/scripts/mygo.js",
+    "phunter": "node src/scripts/hunter.js"
   },
   "keywords": [],
   "author": "Alex <cncent454518@gmail.com>",

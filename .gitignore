@@ -4,3 +4,4 @@ coverage
 .wrangler
 .prod.vars
 .mygo.vars
+.hunter.vars
