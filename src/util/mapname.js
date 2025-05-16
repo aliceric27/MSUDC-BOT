@@ -7,7 +7,7 @@ const MAP_NAME_MAPPINGS = {
   '挖2': 'Twilight Perion Forsaken Excavation Site 2',
   '挖二': 'Twilight Perion Forsaken Excavation Site 2',
   '挖掘地2': 'Twilight Perion Forsaken Excavation Site 2',
-  
+  '204':  'Inside the Mothership Corridor 204'
   // 可以在此處添加更多地圖名稱映射
   // 例如：
   // '月之橋': 'Lunar Bridge',
