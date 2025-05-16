@@ -7,11 +7,13 @@ const MAP_NAME_MAPPINGS = {
   '挖2': 'Twilight Perion Forsaken Excavation Site 2',
   '挖二': 'Twilight Perion Forsaken Excavation Site 2',
   '挖掘地2': 'Twilight Perion Forsaken Excavation Site 2',
-  '204':  'Inside the Mothership Corridor 204'
+  '204':  'Inside the Mothership Corridor 204',
+  '紫刀': 'Kingdom Road Forest of Sorrows 1',
+  '哭哭森林1': 'Kingdom Road Forest of Sorrows 1',
+  '森1': 'Kingdom Road Forest of Sorrows 1',
+  '洛斯威爾草原2': 'Omega Sector Boswell Field II',
+  '草2': 'Omega Sector Boswell Field II',
   // 可以在此處添加更多地圖名稱映射
-  // 例如：
-  // '月之橋': 'Lunar Bridge',
-  // '水晶花園': 'Crystal Garden',
 };
 
 /**
