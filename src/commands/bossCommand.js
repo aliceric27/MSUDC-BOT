@@ -14,6 +14,11 @@ export const getBossWebhookUrl = (server, env) => {
   }
 }
 
+// 新增函數處理map名稱的URL編碼
+export const encodeMapNameForUrl = (mapName) => {
+  return encodeURIComponent(mapName).replace(/%20/g, '+');
+};
+
 export async function handleBossCommand(interaction, env) {
 
   // 獲取用戶提供的地圖和頻道參數
@@ -38,9 +43,9 @@ export async function handleBossCommand(interaction, env) {
   const map = mapOption.value;
   const channel = channelOption.value;
   const server = serverOption.value;
-
+  const encodedMapName = encodeMapNameForUrl(map);
   // 創建格式化的訊息
-  const message = ` [**${map}**](<https://maplestorywiki.net/index.php?search=${map}+map&title=Special%3ASearch&profile=default&fulltext=1>) - **${channel}** ch. 發現黑王`;
+  const message = ` [**${map}**](<https://maplestorywiki.net/index.php?search=${encodedMapName}+map&title=Special%3ASearch&profile=default&fulltext=1>) - **${channel}** ch. 發現黑王`;
   const hookUrl = getBossWebhookUrl(server, env);
   try {
     // 使用webhook發送訊息
