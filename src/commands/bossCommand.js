@@ -1,18 +1,16 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { JsonResponse } from './index.js';
+import { translateMapName } from '../util/mapname.js';
 
 export const getBossWebhookUrl = (server, env) => {
-  switch (server) {
-    case 1:
-      return env.BOSS_WEBHOOK_URL_1;
-    case 2:
-      return env.BOSS_WEBHOOK_URL_2;
-    case 3:
-      return env.BOSS_WEBHOOK_URL_3;
-    default:
-      return null;
-  }
-}
+  const config = {
+    1: { dcRoleId: '1372770930337775656', webhookUrl: env.BOSS_WEBHOOK_URL_1 },
+    2: { dcRoleId: '1372771580018430053', webhookUrl: env.BOSS_WEBHOOK_URL_2 },
+    3: { dcRoleId: '1372771022809595986', webhookUrl: env.BOSS_WEBHOOK_URL_3 },
+  };
+
+  return config[server] || null;
+};
 
 // 新增函數處理map名稱的URL編碼
 export const encodeMapNameForUrl = (mapName) => {
@@ -43,10 +41,14 @@ export async function handleBossCommand(interaction, env) {
   const map = mapOption.value;
   const channel = channelOption.value;
   const server = serverOption.value;
-  const encodedMapName = encodeMapNameForUrl(map);
+  const enMapName = translateMapName(map);
+  const encodedMapName = encodeMapNameForUrl(enMapName);
+  const dcRoleId = getBossWebhookUrl(server, env)?.dcRoleId;
+
+
   // 創建格式化的訊息
-  const message = ` [**${map}**](<https://maplestorywiki.net/index.php?search=${encodedMapName}+map&title=Special%3ASearch&profile=default&fulltext=1>) - **${channel}** ch. 發現黑王`;
-  const hookUrl = getBossWebhookUrl(server, env);
+  const message = ` [**${map}**](<https://maplestorywiki.net/index.php?search=${encodedMapName}+map&title=Special%3ASearch&profile=default&fulltext=1>) - **${channel}** ch. 發現黑王 <@&${dcRoleId}>`;
+  const hookUrl = getBossWebhookUrl(server, env)?.webhookUrl;
   try {
     // 使用webhook發送訊息
     const response = await fetch(`${hookUrl}?wait=true`, {

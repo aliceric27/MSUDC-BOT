@@ -31,6 +31,15 @@ async function updateFiles() {
     console.log('執行 reg 和 publish 命令...');
     await execPromise('pnpm run reg && pnpm run publish');
     console.log('完成！');
+    
+    // 將環境變數路徑改回 .dev.vars
+    registerContent = await fs.readFile(registerPath, 'utf8');
+    registerContent = registerContent.replace(
+      /dotenv\.config\(\{\s*path:\s*['"].+['"]\s*\}\);/,
+      'dotenv.config({ path: \'.dev.vars\' });'
+    );
+    await fs.writeFile(registerPath, registerContent, 'utf8');
+    console.log('已將 register.js 中的環境變數路徑改回 .dev.vars');
   } catch (error) {
     console.error('發生錯誤:', error);
     process.exit(1);
