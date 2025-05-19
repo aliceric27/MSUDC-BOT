@@ -1,0 +1,7 @@
+node_modules
+coverage
+.dev.vars
+.wrangler
+.prod.vars
+.mygo.vars
+.hunter.vars
