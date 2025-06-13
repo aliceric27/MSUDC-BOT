@@ -1,4 +1,4 @@
-import {BOSS1_COMMAND, BOSS2_COMMAND, BOSS3_COMMAND, GMS_SEARCH_COMMAND} from './commands.js';
+import {BOSS1_COMMAND, BOSS2_COMMAND, BOSS3_COMMAND, GMS_SEARCH_COMMAND, NFT_SEARCH_COMMAND, REWARD_AVG_COMMAND} from './commands.js';
 import dotenv from 'dotenv';
 import process from 'node:process';
 
@@ -34,7 +34,7 @@ const response = await fetch(url, {
     Authorization: `Bot ${token}`,
   },
   method: 'PUT',
-  body: JSON.stringify([BOSS1_COMMAND, BOSS2_COMMAND, BOSS3_COMMAND, GMS_SEARCH_COMMAND]),
+  body: JSON.stringify([BOSS1_COMMAND, BOSS2_COMMAND, BOSS3_COMMAND, GMS_SEARCH_COMMAND, NFT_SEARCH_COMMAND, REWARD_AVG_COMMAND]),
 });
 
 if (response.ok) {

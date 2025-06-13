@@ -1,12 +1,6 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
 import { JsonResponse } from './index.js';
-
-
-const WEB_HOOK_LIST = {
-  1:[],
-  2:[],
-  3:[],
-}
+import timers from "node:timers";
 
 export const getBossWebhookUrl = (server, env) => {
   const config = {
@@ -20,10 +14,17 @@ export const getBossWebhookUrl = (server, env) => {
 
 // 新增專用伺服器的Boss命令處理函數
 export async function handleBossServerCommand(interaction, env, messageRegistry, userMessages, serverNumber) {
+  const WEB_HOOK_LIST = {
+    1:[],
+    2:[env.BOSS_WEBHOOK_URL_4],
+    3:[],
+  }
+
   // 獲取用戶提供的頻道參數
   const options = interaction.data.options || [];
   const channelOption = options.find(opt => opt.name === 'channel');
   const imageOption = options.find(opt => opt.name === 'image');
+  const textOption = options.find(opt => opt.name === 'text');
   
   // 確保提供了必要參數
   if (!channelOption || !imageOption) {
@@ -38,12 +39,14 @@ export async function handleBossServerCommand(interaction, env, messageRegistry,
   
   const channel = channelOption.value;
   const server = serverNumber; // 使用函數參數指定的伺服器編號
-  
+  const customText = textOption ? `備註: ${textOption.value}` : '';
   const dcRoleId = getBossWebhookUrl(server, env)?.dcRoleId;
 
   // 創建格式化的訊息
   const message = `黑王出現!!
-**${channel}** 頻道`;
+**${channel}** 頻道
+${customText}
+`;
   
   const hookUrl = getBossWebhookUrl(server, env)?.webhookUrl;
   
@@ -61,7 +64,10 @@ export async function handleBossServerCommand(interaction, env, messageRegistry,
         },
       });
     }
-    
+
+
+
+
     // 使用webhook發送訊息
     const response = await fetch(`${hookUrl}?wait=true`, {
       method: 'POST',
@@ -79,6 +85,8 @@ export async function handleBossServerCommand(interaction, env, messageRegistry,
         ]
       }),
     });
+
+
     
     if (WEB_HOOK_LIST[server] && WEB_HOOK_LIST[server].length > 0) {
       for (const webhookUrl of WEB_HOOK_LIST[server]) {
@@ -103,8 +111,8 @@ export async function handleBossServerCommand(interaction, env, messageRegistry,
     
     const responseJson = await response.json();
     console.log(JSON.stringify(responseJson, null, 2));
-    const messageURL = `https://discordapp.com/channels/${env.GUILD_ID}/${responseJson['channel_id']}/${responseJson['id']}`;
-  
+    const messageURL = `https://discordapp.com/channels/${env.GUILD_ID}/${responseJson.channel_id}/${responseJson.id}`;
+
     if (!response.ok) {
       console.error('發送訊息到webhook失敗:', await response.clone().text());
       return new JsonResponse({
@@ -115,6 +123,7 @@ export async function handleBossServerCommand(interaction, env, messageRegistry,
         },
       });
     }
+
     
     // 回應用戶的命令
     return new JsonResponse({

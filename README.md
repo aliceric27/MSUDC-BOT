@@ -40,6 +40,7 @@ npx wrangler --version
 ## 開發與部署
 
 - 本地開發: `pnpm dev`
+- Ngrok: `ngrok http 8787`
 - 部署: `pnpm publish`
 
 ## 使用方法

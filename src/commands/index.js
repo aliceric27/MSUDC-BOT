@@ -12,3 +12,5 @@ export class JsonResponse extends Response {
 
 export { handleBossServerCommand } from './bossCommand.js';
 export { handleGmsSearchCommand } from './gmsSearchCommand.js';
+export { handleQueryNftsCommand, handleQueryNftsAutocomplete } from './querynfts.js';
+export { handleRewardAvgCommand } from './rewardAvgCommand.js';

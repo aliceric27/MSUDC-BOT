@@ -1,7 +1,26 @@
-node_modules
-coverage
+# 相依套件
+node_modules/
+
+# 測試覆蓋率報告
+coverage/
+
+# Cloudflare Workers 設定檔案
+.wrangler/
+
+# 環境變數檔案
 .dev.vars
-.wrangler
 .prod.vars
 .mygo.vars
 .hunter.vars
+
+# 腳本檔案 (如果包含敏感資訊)
+src/scripts/
+
+# 其他常見的忽略項目
+.env
+.env.local
+.env.production
+.env.development
+*.log
+.DS_Store
+Thumbs.db

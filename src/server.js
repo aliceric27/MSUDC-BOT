@@ -13,6 +13,8 @@ import {
   BOSS2_COMMAND,
   BOSS3_COMMAND,
   GMS_SEARCH_COMMAND, 
+  NFT_SEARCH_COMMAND,
+  REWARD_AVG_COMMAND,
 } from './commands.js';
 // import { getCuteUrl } from './reddit.js';
 import { InteractionResponseFlags } from 'discord-interactions';
@@ -20,6 +22,9 @@ import {
   JsonResponse,
   handleBossServerCommand,
   handleGmsSearchCommand,
+  handleQueryNftsCommand,
+  handleQueryNftsAutocomplete,
+  handleRewardAvgCommand,
 } from './commands/index.js';
 
 // 使用KV存儲或內存存儲來記錄訊息與用戶的對應關係
@@ -57,6 +62,14 @@ router.post('/', async (request, env) => {
     });
   }
 
+  if (interaction.type === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
+    // 處理自動完成請求
+    if (interaction.data.name.toLowerCase() === NFT_SEARCH_COMMAND.name.toLowerCase()) {
+      return handleQueryNftsAutocomplete(interaction);
+    }
+    return new JsonResponse({ error: 'Unknown Autocomplete Command' }, { status: 400 });
+  }
+
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
     // Most user commands will come as `APPLICATION_COMMAND`.
     switch (interaction.data.name.toLowerCase()) {
@@ -71,6 +84,12 @@ router.post('/', async (request, env) => {
       }
       case GMS_SEARCH_COMMAND.name.toLowerCase(): {
         return handleGmsSearchCommand(interaction, env, messageRegistry, userMessages);
+      }
+      case NFT_SEARCH_COMMAND.name.toLowerCase(): {
+        return handleQueryNftsCommand(interaction, env);
+      }
+      case REWARD_AVG_COMMAND.name.toLowerCase(): {
+        return handleRewardAvgCommand(interaction);
       }
       default:
         return new JsonResponse({ error: 'Unknown Type' }, { status: 400 });

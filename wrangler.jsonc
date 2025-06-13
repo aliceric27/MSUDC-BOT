@@ -1,0 +1,18 @@
+{
+    "name": "mygobot",
+    "main": "./src/server.js",
+    "compatibility_date": "2025-05-05",
+    "compatibility_flags": [
+        "nodejs_compat"
+      ]
+    // 以下是密鑰配置，實際使用時需通過wrangler secret命令設定
+    // secrets:
+    // DISCORD_TOKEN
+    // DISCORD_PUBLIC_KEY
+    // DISCORD_APPLICATION_ID
+    // BOSS_WEBHOOK_URL_1
+    // BOSS_WEBHOOK_URL_2
+    // BOSS_WEBHOOK_URL_3
+    // BOSS_WEBHOOK_URL_4
+    // GUILD_ID
+  }

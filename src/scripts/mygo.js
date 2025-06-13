@@ -18,14 +18,14 @@ async function updateFiles() {
     console.log('已更新 register.js 文件');
 
     // 更新 wrangler.toml 中的名稱
-    const wranglerPath = 'wrangler.toml';
+    const wranglerPath = 'wrangler.jsonc';
     let wranglerContent = await fs.readFile(wranglerPath, 'utf8');
     wranglerContent = wranglerContent.replace(
       /name\s*=\s*["'].+["']/,
       'name = "mygobot"'
     );
     await fs.writeFile(wranglerPath, wranglerContent, 'utf8');
-    console.log('已更新 wrangler.toml 文件');
+    console.log('已更新 wrangler.jsonc 文件');
 
     // 執行註冊和發布命令
     console.log('執行 reg 和 publish 命令...');
